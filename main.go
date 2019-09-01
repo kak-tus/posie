@@ -67,10 +67,10 @@ ST:
 
 			var txt string
 
-			if accCnt == 2 && changed {
+			if accCnt == 6 && changed {
 				txt = textOk
 				println("Ok detected")
-			} else if unaccCnt == 2 {
+			} else if unaccCnt == 6 {
 				txt = textFail
 				println("Fail detected")
 			}
