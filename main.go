@@ -12,6 +12,14 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
+const switchLimit = time.Minute * 1
+
+const (
+	_ = iota
+	stateOK
+	stateFail
+)
+
 func main() {
 	addr := os.Getenv("POSIE_ADDR")
 	token := os.Getenv("POSIE_TG_TOKEN")
@@ -44,8 +52,9 @@ func main() {
 		panic(err)
 	}
 
-	var unaccCnt, accCnt int
-	var changed bool
+	lastFail := time.Now()
+	lastOk := time.Now()
+	state := stateOK
 
 ST:
 	for {
@@ -57,21 +66,20 @@ ST:
 			_, err := pinger.Ping(dest, time.Second*10)
 
 			if err != nil {
-				unaccCnt++
-				accCnt = 0
-				changed = true
+				lastFail = time.Now()
 			} else {
-				accCnt++
-				unaccCnt = 0
+				lastOk = time.Now()
 			}
 
 			var txt string
 
-			if accCnt == 6 && changed {
+			if lastOk.After(lastFail) && lastOk.Sub(lastFail) > switchLimit && state == stateFail {
 				txt = textOk
+				state = stateOK
 				println("Ok detected")
-			} else if unaccCnt == 6 {
+			} else if lastFail.After(lastOk) && lastFail.Sub(lastOk) > switchLimit && state == stateOK {
 				txt = textFail
+				state = stateFail
 				println("Fail detected")
 			}
 
